@@ -18,7 +18,7 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, "password is required"],
+      required:false
     },
     phone: {
       type: String,
@@ -39,9 +39,13 @@ const userSchema = new Schema(
       type: String,
       trim: true,
     },
+     googleId: {
+      type: String,
+      sparse: true,
+    },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "owner"],
       default: "user",
     },
     image: {

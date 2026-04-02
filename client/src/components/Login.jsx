@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.jsx';
 import toast from 'react-hot-toast';
 import { assets } from '../assets/assets.js';
+import {GoogleLogin} from "@react-oauth/google"
 
 const Login = () => {
   const { setShowLogin, axios, navigate, setUser } = useAppContext();
@@ -57,7 +58,25 @@ const Login = () => {
       toast.error(error?.response?.data?.message || error.message);
     }
   };
-
+  const handleGoogleSuccess = async (response) => {
+    try {
+      const { data } = await axios.post('/api/v1/auth/google', {
+        credential: response.credential,
+      });
+      if (data?.success) {
+        navigate('/');
+        setUser(data.data.user);
+        setShowLogin(false);
+        toast.success(data?.message || 'Google login successful');
+        
+      } else {
+        toast.error(data?.message  || "hello ");
+        console.log("RESPONSE:", data);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || "hello ");
+    }
+  };
   return (
     <div
       onClick={() => setShowLogin(false)}
@@ -223,7 +242,7 @@ const Login = () => {
           <p className="mx-4 text-gray-400">or</p>
         </div>
 
-        <button
+        {/* <button
           type="button"
           className="w-full cursor-pointer flex items-center gap-2 justify-center bg-white border border-gray-300 py-2.5 rounded-full text-gray-700 hover:bg-gray-50 transition-all"
         >
@@ -233,7 +252,16 @@ const Login = () => {
             alt="google"
           />
           Continue with Google
-        </button>
+        </button> */}
+        <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => toast.error('Google Login Failed')}
+            text="continue_with"
+            shape="pill"
+            theme="outline"
+            size="large"
+            width="320"
+          />
       </div>
     </div>
   );

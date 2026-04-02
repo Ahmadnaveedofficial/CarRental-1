@@ -3,7 +3,8 @@ import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.model.js";
 import { Car } from "../models/car.model.js";
-
+import {sendBookingEmail,sendCancelEmail} from "../sendBookingEmails/sendBookingEmail.js"
+import {User} from "../models/user.model.js"
 // check availability of car for given dates
 
 const checkCarAvailability = async (car, pickupDate, returnDate) => {
@@ -103,7 +104,8 @@ const createBooking = asyncHandler(async (req, res) => {
     returnDate,
     price,
   });
-
+  const userData=await User.findById(_id)
+  sendBookingEmail(userData.email,userData.name,carData,booking)
   res
     .status(201)
     .json(new ApiResponse(201, "Booking created successfully", booking));
@@ -115,6 +117,7 @@ const userBookings = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const bookings = await Booking.find({ user: _id })
     .populate("car")
+    .populate("owner","name image email")
     .sort({ createdAt: -1 });
   res
     .status(200)
@@ -162,13 +165,62 @@ const changeBookingStatus = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Booking status updated successfully", booking));
 });
+const userCancelBooking = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { bookingId } = req.body;
 
+  if (!bookingId) {
+    throw new ApiError(400, "Booking ID is required");
+  }
+
+ const booking = await Booking.findById(bookingId)
+  .populate("user", "name email")
+  .populate("car");
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found");
+  }
+
+  // Check if this booking belongs to the user
+  if (booking.user._id.toString() !== _id.toString()) {
+    throw new ApiError(403, "Unauthorized to cancel this booking");
+  }
+
+  // Check if already cancelled
+  if (booking.status === "Cancelled") { 
+    throw new ApiError(400, "Booking is already cancelled");
+  }
+
+  // Check if pickup date has already passed
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const pickupDate = new Date(booking.pickupDate);
+  pickupDate.setHours(0, 0, 0, 0);
+
+  if (pickupDate <= today) {
+    throw new ApiError(400, "Cannot cancel booking on or after pickup date");
+  }
+
+  booking.status = "Cancelled";
+  
+  await booking.save();
+ sendCancelEmail(
+      booking.user.email,
+      booking.user.name,
+      booking.car,
+      booking
+    );
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Booking cancelled successfully", booking));
+})
 export {
   checkCarAvailability,
   checkAvailabilityOfCars,
   createBooking,
   userBookings,
   ownerBookings,
+  userCancelBooking,
   changeBookingStatus,
 };
 

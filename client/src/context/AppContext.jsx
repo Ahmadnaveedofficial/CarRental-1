@@ -19,7 +19,7 @@ export const AppProvider = ({ children }) => {
   const [returnDate, setReturnDate] = useState('');
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [blogs, setBlogs] = useState([]);
   // function if check user is logged in
   const fetchUser = async () => {
     try {
@@ -50,13 +50,61 @@ export const AppProvider = ({ children }) => {
   const fetchCars = async () => {
     try {
       const { data } = await axios.get('/api/v1/users/cars');
-      console.log("API RESPONSE:", data);
+      // console.log("API RESPONSE:", data);
       data.success ? setCars(data.data) : toast.error(data.message);
     } catch (error) {
       toast.error(error?.response?.data?.message || error.message);
     }
   };
+  const fetchBlogs = async () => {
+    try {
+      const { data } = await axios.get('/api/v1/blogs/');
+      console.log(data)
+      data.success ? setBlogs(data.data) : toast.error(data.message);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
+  };
+useEffect(() => {
+    // sirf non-auth routes par retry karo
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
 
+        //  Yeh routes par retry bilkul mat karo
+        const skipRetryUrls = [
+          '/api/v1/users/data',
+          '/api/v1/users/refresh-token',
+          '/api/v1/users/login',
+        ];
+
+        const shouldSkip = skipRetryUrls.some((url) =>
+          originalRequest.url?.includes(url)
+        );
+
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !shouldSkip
+        ) {
+          originalRequest._retry = true;
+          try {
+            await axios.post('/api/v1/users/refresh-token');
+            return axios(originalRequest);
+          } catch (refreshError) {
+            setUser(null);
+            setIsOwner(false);
+            return Promise.reject(refreshError);
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
   // function to handle logout
   const logout = async () => {
     try {
@@ -77,8 +125,14 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     fetchCars();
     fetchUser();
+    fetchBlogs();
   }, []);
-
+// const init = async () => {
+//     await Promise.all([fetchUser(), fetchCars()]);
+//   };
+//   useEffect(() => {
+//   init();
+// }, []);
 
   const value = {
     navigate,
@@ -100,6 +154,8 @@ export const AppProvider = ({ children }) => {
     returnDate,
     setReturnDate,
     loading,
+    blogs,
+    setBlogs,
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
