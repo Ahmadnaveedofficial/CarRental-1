@@ -5,6 +5,7 @@ const app=express()
 
 app.use(
   cors({
+    // origin:"*",
     origin: "https://car-rental-client-eosin.vercel.app",
     
      credentials: true
