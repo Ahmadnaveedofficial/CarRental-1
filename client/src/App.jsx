@@ -37,18 +37,18 @@ const App = () => {
         <Route
           path="/my-bookings"
           element={
-            <ProtectedRoute> 
+            
               <MyBookings />
-            </ProtectedRoute>
+         
           }
         />
         .
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            
               <UserProfile />
-            </ProtectedRoute>
+           
           }
         />
             <Route path="/blogs" element={<Blogs />} />
