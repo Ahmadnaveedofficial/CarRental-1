@@ -20,6 +20,7 @@ import { useAppContext } from "./context/AppContext.jsx";
 import ProtectedOwnerRoute from "./components/owner/ProtectedOwnerRoute.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import BlogDetails from "./pages/BlogsDetails.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 const App = () => {
   const { showLogin, setShowLogin } = useAppContext();
@@ -37,8 +38,10 @@ const App = () => {
         <Route
           path="/my-bookings"
           element={
-            
+            <ProtectedRoute>
+              
               <MyBookings />
+            </ProtectedRoute>
          
           }
         />
@@ -46,8 +49,10 @@ const App = () => {
         <Route
           path="/profile"
           element={
-            
+            <ProtectedRoute>
+
               <UserProfile />
+            </ProtectedRoute>
            
           }
         />
