@@ -6,7 +6,6 @@ const app=express()
 app.use(
   cors({
     origin: "https://car-rental-client-eosin.vercel.app",
-        // origin: "http://localhost:5173",
     credentials: true
   })
 );
