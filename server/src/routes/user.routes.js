@@ -7,7 +7,6 @@ const userRouter=Router();
 
 userRouter.route("/register")
         .post(upload.fields([{name:"image",maxCount:1}]),registerUser)
-
 userRouter.route("/login").post(loginUser)
 userRouter.route("/data").get(verifyJWT,getUserData)
 userRouter.route("/logout").post(verifyJWT,logoutUser)
